@@ -6,70 +6,69 @@ class PromoByClosure implements Calculatable
 {
     public function calculate($sn, $price)
     {
-        return $this->resolve([
-            $this->promo08($sn, $price),
-            $this->promo01($sn, $price),
-            $this->promo10($sn, $price),
+        $resolver = $this->getResolver([
+            $this->promo08(),
+            $this->promo01(),
+            $this->promo10(),
         ]);
+        return $resolver($sn, $price);
     }
 
     /**
      * @param array $resolvers
-     * @return bool|mixed
+     * @return \Closure
      */
-    private function resolve(array $resolvers)
+    private function getResolver(array $resolvers)
     {
-        /** @var \Closure $resolver */
-        $result = null;
-        foreach (array_reverse($resolvers) as $resolver) {
-            $result = $resolver($result);
-        }
-        return $result;
+        $defaultResolver = array_pop($resolvers);
+        $resolver = array_reduce(array_reverse($resolvers), function ($next, $resolver) {
+            return $resolver($next);
+        }, $defaultResolver());
+        return $resolver;
     }
 
     /**
-     * @param $sn
-     * @param $price
      * @return \Closure
      */
-    private function promo08($sn, $price)
+    private function promo08()
     {
-        return function ($next) use ($sn, $price) {
-            if ('A' === $sn[0]) {
-                return $price * 0.8;
-            }
-            return $next;
+        return function (\Closure $next) {
+            return function ($sn, $price) use ($next) {
+                if ('A' === $sn[0]) {
+                    return $price * 0.8;
+                }
+                return $next($sn, $price);
+            };
         };
     }
 
     /**
-     * @param $sn
-     * @param $price
      * @return \Closure
-     * @internal param Closure $next
      */
-    private function promo01($sn, $price)
+    private function promo01()
     {
-        return function ($next) use ($sn, $price) {
-            if ('B' === $sn[0]) {
-                return $price * 0.1;
-            }
-            return $next;
+        return function (\Closure $next) {
+            return function ($sn, $price) use ($next) {
+                if ('B' === $sn[0]) {
+                    return $price * 0.1;
+                }
+                return $next($sn, $price);
+            };
         };
     }
 
     /**
-     * @param $sn
-     * @param $price
      * @return \Closure
      */
-    private function promo10($sn, $price)
+    private function promo10()
     {
-        return function ($next) use ($sn, $price) {
-            if ('C' === $sn[0]) {
-                return $price - 10;
-            }
-            return $next;
+        return function () {
+            return function ($sn, $price) {
+                if ('C' === $sn[0]) {
+                    return $price - 10;
+                }
+                return $price;
+            };
         };
     }
 }

@@ -5,11 +5,11 @@ namespace Example;
 abstract class Promo implements Calculatable
 {
     /** @var Promo */
-    protected $_next = null;
+    protected $next = null;
 
-    abstract protected function _accept($sn);
+    abstract protected function accept($sn);
 
-    protected function _newPrice($price)
+    protected function newPrice($price)
     {
         return $price;
     }
@@ -24,16 +24,16 @@ abstract class Promo implements Calculatable
 
     public function setNext(Promo $promo)
     {
-        $this->_next = $promo;
-        return $this->_next;
+        $this->next = $promo;
+        return $this->next;
     }
 
     public function calculate($sn, $price)
     {
-        if ($this->_accept($sn)) {
-            return $this->_newPrice($price);
+        if ($this->accept($sn)) {
+            return $this->newPrice($price);
         } else {
-            return $this->_next->calculate($sn, $price);
+            return $this->next->calculate($sn, $price);
         }
     }
 }
